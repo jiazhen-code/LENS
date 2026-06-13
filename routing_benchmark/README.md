@@ -73,8 +73,6 @@ See the top-level README ("Routing benchmark") for the optional flags (`--output
 
 ## Notes
 
-- qwen3-32b is text-only and is used only for **construction/curation** (operating on query
-  text), never as the router under test.
 - Image paths follow the LISA layout (VQA → `coco/train2017`, refcoco →
   `refer_seg/images/mscoco/images/train2014`, ReasonSeg → the jpg next to each json). The
   build prints how many resolved image paths are missing so you can fix `--dataset_dir`.

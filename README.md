@@ -224,8 +224,3 @@ on the main process only, for the first `max_viz` batches of each epoch. Control
 `TrainConfig.save_viz` / `TrainConfig.max_viz`. (Over many epochs this can add up — lower
 `max_viz` if disk is tight.)
 
-## Note on data pipelines
-
-Training uses LISA's `HybridDataset` / `collate_fn` (under `LISA/utils/`), which yields
-`resize_list`; evaluation uses the loaders under `lens/data/`, which yield
-`sam_mask_shape_list`. These two pipelines are kept separate, exactly as in the original code.

@@ -1,0 +1,43 @@
+# Qwen2-VL-2B backbone experiment.
+# Overrides only what differs from configs/default.yaml.
+#
+# Requires a transformers version that ships Qwen2VLForConditionalGeneration (>= 4.45).
+# image_hw must be a multiple of 28 (patch 14 * spatial-merge 2):
+#   448 -> 16x16 = 256 tokens ; 896 -> 32x32 = 1024 tokens (set num_image_tokens to match).
+# The fusion head mirrors a Qwen2 layer and is warm-started from Qwen2-VL's MIDDLE layers.
+
+model:
+  backbone:
+    name: qwen2-vl-2b
+    model_name: Qwen/Qwen2-VL-2B-Instruct
+    hidden_size: 1536
+    num_image_tokens: 576
+    selected_layer_id: 20                # ~middle of Qwen2-VL-2B's 28 layers
+    grounding_init_start_layer: 20
+    trust_remote_code: false
+    image_hw: 672
+
+train:
+#  save_dir: /ssd1/save_dir_qwen
+  save_dir: ./save_dir_qwen
+  train_per_steps: 100
+  save_viz: true
+  base_lr: 5.0e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4
+
+eval:
+#  dataset_dir: /path/to/lisa_data/
+  dataset_dir: /path/to/lisa_data/
+#  log_dir: /ssd1/flows/logs
+  log_dir: ./flows/logs
+  workers: 4
+  save_viz: true
+  val_dataset: ReasonSeg                     # ReasonSeg | refcoco | refcoco+ | refcocog
+  val_split: val                             # val | test | testA | testB
+
+
+data:
+  dataset_dir: /path/to/lisa_data/
+#  dataset_dir: /path/to/lisa_data/
+  sample_rates: "9,1,0,1"

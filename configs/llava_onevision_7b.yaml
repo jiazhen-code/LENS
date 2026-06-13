@@ -1,0 +1,51 @@
+# LLaVA-OneVision-7B backbone experiment (llava-hf/llava-onevision-qwen2-7b-ov-hf).
+# Overrides only what differs from configs/default.yaml.
+#
+# LLaVA-OneVision = SigLIP vision tower + Qwen2-7B LM. Despite the "LLaVA" name it does NOT
+# use the vendored LLaVA-1.5 path; it subclasses the generic backbone for the fusion-head
+# build (mirrors a Qwen2 layer, warm-started from its middle layers) but OVERRIDES encode.
+# Standard 1-D RoPE (no Qwen2-VL-style M-RoPE).
+#
+# LLaVA-OneVision is anyres, but the backbone bypasses it: instead of letting the processor
+# tile the image (which would emit a non-square ~1485 tokens at 384px), encode() runs the
+# SigLIP vision tower + projector on a single image_hw x image_hw base tile -> exactly
+# grid^2 = 27x27 = 729 patch embeddings (no patch duplication, no newline), then scatters them
+# into the Qwen2 LM the LLaVA-1.5 way. So num_image_tokens is the SigLIP base grid (729) and
+# image_hw is the SigLIP base size (384). If scripts/smoke_backbone.py reports a different
+# (square) SigLIP count, set num_image_tokens to it.
+
+model:
+  backbone:
+    name: llava-onevision-7b
+    model_name: llava-hf/llava-onevision-qwen2-7b-ov-hf
+    hidden_size: 3584                     # Qwen2-7B hidden size
+    num_image_tokens: 729                 # 27x27 SigLIP base grid at image_hw=384 (confirm via smoke test)
+    selected_layer_id: 14                 # ~middle of Qwen2-7B's 28 layers
+    grounding_init_start_layer: 14        # warm-start fusion head from Qwen2 layers 14-15
+    image_hw: 384                         # SigLIP base resolution (vision tower native input size)
+
+train:
+  save_dir: ./save_dir
+  train_per_steps: 100
+  save_viz: true
+  base_lr: 5.0e-5
+  batch_size: 2
+  use_wandb: false
+  gradient_accumulation_steps: 4
+
+eval:
+#  dataset_dir: /path/to/lisa_data/
+  dataset_dir: /path/to/lisa_data/
+#  log_dir: /ssd1/flows/logs
+  log_dir: ./flows/logs_new
+  workers: 4
+  save_viz: true
+  val_dataset: refcocog                     # ReasonSeg | refcoco | refcoco+ | refcocog
+  val_split: test                              # val | test | testA | testB
+
+
+data:
+  dataset_dir: /path/to/lisa_data/
+#  dataset_dir: /path/to/lisa_data/
+#  sample_rates: "9,1,0,1"
+  sample_rates: "9,1,0,1"

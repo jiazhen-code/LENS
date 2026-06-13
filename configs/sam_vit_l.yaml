@@ -1,0 +1,36 @@
+# SAM ViT-L decoder experiment (LLaVA backbone unchanged).
+# Only the SAM segmentation backbone changes; the checkpoint is auto-downloaded.
+# Resume (inherited from default: ./save_dir/full_10.pth) warm-starts the trained
+# conditioner + mask decoder; the frozen ViT-L image encoder is loaded fresh from its own
+# checkpoint (shape-mismatched encoder tensors in the resume file are skipped). Set
+# resume_checkpoint: null below to train this variant fully from scratch.
+
+model:
+  decoder:
+    sam_variant: vit_l
+    sam_checkpoint: ./sam_vit_l_0b3195.pth
+
+
+train:
+  save_dir: ./save_dir_vitl_ft
+  train_per_steps: 100
+  save_viz: false
+  base_lr: 5.0e-5
+  batch_size: 8
+  gradient_accumulation_steps: 4
+
+eval:
+  dataset_dir: /path/to/lisa_data/
+#  dataset_dir: /path/to/lisa_data/
+#  log_dir: /ssd1/flows/logs
+  log_dir: ./flows/logs
+  workers: 4
+  save_viz: false
+  val_dataset: ReasonSeg                     # ReasonSeg | refcoco | refcoco+ | refcocog
+  val_split: test                             # val | test | testA | testB
+
+
+data:
+#  dataset_dir: /path/to/lisa_data/
+  dataset_dir: /path/to/lisa_data/
+  sample_rates: "9,1,0,1"

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# IDE / editor / tooling
+.idea/
+.vscode/
+.claude/
+
+# Model checkpoints & caches
+*.pth
+*.pt
+*.bin
+*.safetensors
+routing_benchmark/.cache/
+
+# Outputs / runs
+viz/
+viz_train/
+runs/
+*.log

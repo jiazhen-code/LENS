@@ -1,0 +1,98 @@
+# LENS default configuration.
+#
+# Every value here equals the number that used to be hard-coded in the code, so running
+# with this file reproduces the original behaviour. Copy this file (e.g.
+# configs/my_experiment.yaml), change only the keys you need, and launch with
+#   accelerate launch train.py --config configs/my_experiment.yaml
+# A YAML file only needs to contain the keys you want to override.
+
+model:
+  # ---- frozen MLLM backbone (pluggable; see lens/models/backbones) ----
+  backbone:
+    name: llava-1.5-7b                       # registry key in lens.models.backbones
+    model_name: llava-hf/llava-1.5-7b-hf
+    hidden_size: 4096
+    num_image_tokens: 576
+    selected_layer_id: 14                    # hidden-state layer tapped as features
+    grounding_init_start_layer: 14           # backbone layer the GroundingHead is warm-started from (null = skip)
+    trust_remote_code: false
+    image_hw: null                           # null = processor decides (LLaVA); int forces a square grid
+  # ---- grounding head (text->image fusion) ----
+  grounding_head:
+    num_attention_layers: 2
+    num_heads: 32
+    intermediate_size: 11008
+  # ---- keypoint extractor ----
+  keypoint:
+    num_keypoints: 16
+    patch_size: 3
+    thre_ratio: 0.4
+    suppression_radius: 4
+  # ---- SAM mask decoder ----
+  decoder:
+    sam_variant: vit_h                       # vit_h | vit_l | vit_b
+    sam_checkpoint: ./sam_vit_h_4b8939.pth
+    bce_weight: 2.0
+    dice_weight: 4.0
+    use_attn_dense_prompt: false             # true = feed attention heatmap as SAM dense prompt
+  kp_thresh: 0.4                             # keypoint threshold used in the forward pass
+
+data:
+  dataset_dir: /path/to/lisa_data/
+  image_size: 1024
+  clip_vision_model: openai/clip-vit-large-patch14
+  tokenizer_name: liuhaotian/llava-llama-2-13b-chat-lightning-preview
+  model_max_length: 512
+  num_classes_per_sample: 3
+  sample_rates: "3,1,0,1"
+  dataset: sem_seg||refer_seg||vqa||reason_seg
+  sem_seg_data: ade20k||cocostuff||pascal_part||paco_lvis||mapillary
+#  sem_seg_data: cocostuff
+  refer_seg_data: refclef||refcoco||refcoco+||refcocog
+  reason_seg_data: ReasonSeg|train
+  vqa_data: llava_instruct_150k
+  explanatory: -1
+  exclude_val: true
+
+train:
+  batch_size: 8
+  num_workers: 4
+  train_per_steps: 100
+  num_epochs: 500
+  base_lr: 1.0e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.95]
+  eta_min: 1.0e-6
+  gradient_accumulation_steps: 4
+  mixed_precision: bf16
+  save_dir: ./save_dir
+  resume_checkpoint: null
+  save_every_epochs: 1
+  save_trainable_only: true                  # skip frozen backbone+SAM in checkpoints (small files)
+  hf_endpoint: https://hf-mirror.com
+  # SAM checkpoint is auto-downloaded to model.decoder.sam_checkpoint using the URL for
+  # model.decoder.sam_variant (see lens/models/backbones/sam.py).
+  # ---- logging / Weights & Biases (train.py) ----
+  use_wandb: true              # true -> log per-step train losses + lr and per-epoch eval to wandb
+  wandb_project: lens
+  wandb_run_name: null          # null -> wandb auto-names the run
+  wandb_entity: null            # team/user; null -> your default entity
+  wandb_mode: null              # null=online; offline | disabled also valid
+  log_every: 10                 # detailed console line every N optimizer steps (wandb logs every step)
+
+eval:
+  val_dataset: ReasonSeg                     # ReasonSeg | refcoco | refcoco+ | refcocog
+  val_split: val                             # val | test | testA | testB
+  dataset_dir: /path/to/lisa_data/
+  clip_vision_model: openai/clip-vit-large-patch14
+  image_size: 1024
+  eval_only: true
+  val_batch_size: 1
+  use_wandb: false
+  precision: fp32
+  use_mm_start_end: false
+  exp_name: eval_exp
+  log_dir: ./flows/logs
+  workers: 4
+  save_viz: true
+  max_viz: 20
